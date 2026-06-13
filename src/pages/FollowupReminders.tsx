@@ -119,11 +119,13 @@ export default function FollowupReminders() {
 
   // Get contact/deal names
   const getContactName = (contactId: string | null) => {
-    return contacts.find(c => c.id === contactId)?.name || '未知';
+    const contact = contacts.find(c => c.id === contactId);
+    if (!contact) return '未知';
+    return contact.first_name + ' ' + (contact.last_name || '');
   };
 
   const getDealName = (dealId: string | null) => {
-    return deals.find(d => d.id === dealId)?.name || '未知';
+    return deals.find(d => d.id === dealId)?.title || '未知';
   };
 
   // Handle add/edit
@@ -395,7 +397,7 @@ export default function FollowupReminders() {
 
       {/* Modal */}
       {isModalOpen && (
-        <Modal onClose={handleCloseModal}>
+        <Modal isOpen={true} title={editingId ? '编辑提醒' : '添加提醒'} onClose={handleCloseModal}>
           <div className="w-full max-w-2xl">
             <h2 className="text-2xl font-bold text-white mb-6">
               {editingId ? '编辑提醒' : '添加提醒'}
@@ -441,7 +443,7 @@ export default function FollowupReminders() {
                 >
                   <option value="">选择联系人</option>
                   {contacts.map(contact => (
-                    <option key={contact.id} value={contact.id}>{contact.name}</option>
+                    <option key={contact.id} value={contact.id}>{contact.first_name + ' ' + (contact.last_name || '')}</option>
                   ))}
                 </select>
               </div>
@@ -455,7 +457,7 @@ export default function FollowupReminders() {
                 >
                   <option value="">选择商机</option>
                   {deals.map(deal => (
-                    <option key={deal.id} value={deal.id}>{deal.name}</option>
+                    <option key={deal.id} value={deal.id}>{deal.title}</option>
                   ))}
                 </select>
               </div>

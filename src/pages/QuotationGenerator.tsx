@@ -24,7 +24,7 @@ export default function QuotationGenerator() {
 
   // Items state
   const [items, setItems] = useState<QuoteItem[]>([
-    { id: '1', product_name: '', quantity: 0, unit: '件', unit_price: 0, amount: 0 },
+    { name: '', qty: 0, unit: '件', price: 0, amount: 0 },
   ]);
 
   const units = ['件', '套', '台', '千克', '平方米'];
@@ -93,20 +93,19 @@ export default function QuotationGenerator() {
     newItems[index] = { ...newItems[index], [field]: value };
 
     // Auto-calculate amount
-    if (field === 'quantity' || field === 'unit_price') {
+    if (field === 'qty' || field === 'price') {
       newItems[index].amount =
-        parseFloat(String(newItems[index].quantity || 0)) *
-        parseFloat(String(newItems[index].unit_price || 0));
+        parseFloat(String(newItems[index].qty || 0)) *
+        parseFloat(String(newItems[index].price || 0));
     }
 
     setItems(newItems);
   };
 
   const handleAddItem = () => {
-    const newId = String(Math.max(...items.map((i) => parseInt(i.id) || 0)) + 1);
     setItems([
       ...items,
-      { id: newId, product_name: '', quantity: 0, unit: '件', unit_price: 0, amount: 0 },
+      { name: '', qty: 0, unit: '件', price: 0, amount: 0 },
     ]);
   };
 
@@ -139,14 +138,13 @@ export default function QuotationGenerator() {
         contact_id: selectedContact || null,
         title: title,
         currency: currency,
-        incoterms: incoterms,
+        trade_terms: incoterms,
         payment_terms: paymentTerms,
         delivery_time: deliveryTime,
-        validity_days: validityDays,
-        remarks: remarks,
-        items: items.filter((item) => item.product_name),
+        valid_days: validityDays,
+        notes: remarks,
+        items: items.filter((item) => item.name),
         status: 'draft',
-        total_amount: calculateTotal(),
         created_at: new Date().toISOString(),
       };
 
@@ -170,7 +168,7 @@ export default function QuotationGenerator() {
       return;
     }
 
-    const validItems = items.filter((item) => item.product_name);
+    const validItems = items.filter((item) => item.name);
     if (validItems.length === 0) {
       alert('至少需要添加一个产品');
       return;
@@ -183,14 +181,13 @@ export default function QuotationGenerator() {
         contact_id: selectedContact || null,
         title: title,
         currency: currency,
-        incoterms: incoterms,
+        trade_terms: incoterms,
         payment_terms: paymentTerms,
         delivery_time: deliveryTime,
-        validity_days: validityDays,
-        remarks: remarks,
+        valid_days: validityDays,
+        notes: remarks,
         items: validItems,
         status: 'finalized',
-        total_amount: calculateTotal(),
         created_at: new Date().toISOString(),
       };
 
@@ -218,7 +215,7 @@ export default function QuotationGenerator() {
     setDeliveryTime('');
     setValidityDays(30);
     setRemarks('');
-    setItems([{ id: '1', product_name: '', quantity: 0, unit: '件', unit_price: 0, amount: 0 }]);
+    setItems([{ name: '', qty: 0, unit: '件', price: 0, amount: 0 }]);
   };
 
   const formatDate = (dateString: string) => {
@@ -287,7 +284,7 @@ export default function QuotationGenerator() {
                   <option value="">-- 选择或跳过 --</option>
                   {contacts.map((contact) => (
                     <option key={contact.id} value={contact.id}>
-                      {contact.name}
+                      {contact.first_name} {contact.last_name || ''}
                     </option>
                   ))}
                 </select>
@@ -401,9 +398,9 @@ export default function QuotationGenerator() {
                       <td className="py-3 px-3">
                         <input
                           type="text"
-                          value={item.product_name}
+                          value={item.name}
                           onChange={(e) =>
-                            handleItemChange(index, 'product_name', e.target.value)
+                            handleItemChange(index, 'name', e.target.value)
                           }
                           placeholder="产品名称"
                           className="input-field w-full text-sm"
@@ -412,9 +409,9 @@ export default function QuotationGenerator() {
                       <td className="py-3 px-3">
                         <input
                           type="number"
-                          value={item.quantity}
+                          value={item.qty}
                           onChange={(e) =>
-                            handleItemChange(index, 'quantity', parseFloat(e.target.value) || 0)
+                            handleItemChange(index, 'qty', parseFloat(e.target.value) || 0)
                           }
                           placeholder="0"
                           className="input-field w-full text-sm text-right"
@@ -436,9 +433,9 @@ export default function QuotationGenerator() {
                       <td className="py-3 px-3">
                         <input
                           type="number"
-                          value={item.unit_price}
+                          value={item.price}
                           onChange={(e) =>
-                            handleItemChange(index, 'unit_price', parseFloat(e.target.value) || 0)
+                            handleItemChange(index, 'price', parseFloat(e.target.value) || 0)
                           }
                           placeholder="0.00"
                           step="0.01"
@@ -544,12 +541,12 @@ export default function QuotationGenerator() {
               <p className="text-slate-400 text-xs font-medium mb-3">产品明细:</p>
               <div className="space-y-2">
                 {items
-                  .filter((item) => item.product_name)
+                  .filter((item) => item.name)
                   .map((item, index) => (
                     <div key={index} className="flex justify-between text-xs text-slate-300">
-                      <span>{item.product_name}</span>
+                      <span>{item.name}</span>
                       <span>
-                        {item.quantity} {item.unit} x {formatCurrency(item.unit_price)} ={' '}
+                        {item.qty} {item.unit} x {formatCurrency(item.price)} ={' '}
                         {formatCurrency(item.amount)}
                       </span>
                     </div>
@@ -607,7 +604,7 @@ export default function QuotationGenerator() {
                       {companies.find((c) => c.id === quotation.company_id)?.name || '-'}
                     </td>
                     <td className="py-3 px-4 text-right font-medium text-slate-200">
-                      {formatCurrency(quotation.total_amount)} {quotation.currency}
+                      {formatCurrency(quotation.items.reduce((sum, item) => sum + (item.amount || 0), 0))} {quotation.currency}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <span

@@ -29,8 +29,8 @@ export default function ImportExportData() {
     product_name: '',
     country: '',
     direction: 'export',
-    quantity: '',
-    amount: '',
+    volume: '',
+    value: '',
     currency: 'USD',
     period: '',
     data_source: '',
@@ -93,12 +93,12 @@ export default function ImportExportData() {
         .from('import_export_data')
         .insert([
           {
-            hs_code: formData.hs_code,
+            hs_code: formData.hs_code || null,
             product_name: formData.product_name,
             country: formData.country,
             direction: formData.direction,
-            quantity: parseFloat(formData.quantity) || 0,
-            amount: parseFloat(formData.amount) || 0,
+            volume: parseFloat(formData.volume) || null,
+            value: parseFloat(formData.value) || null,
             currency: formData.currency,
             period: formData.period,
             data_source: formData.data_source,
@@ -117,8 +117,8 @@ export default function ImportExportData() {
         product_name: '',
         country: '',
         direction: 'export',
-        quantity: '',
-        amount: '',
+        volume: '',
+        value: '',
         currency: 'USD',
         period: '',
         data_source: '',
@@ -152,7 +152,7 @@ export default function ImportExportData() {
 
   const getFilteredRecords = () => {
     return records.filter((record) => {
-      if (filters.hsCode && !record.hs_code.includes(filters.hsCode)) {
+      if (filters.hsCode && !(record.hs_code || '').includes(filters.hsCode)) {
         return false;
       }
       if (filters.country && record.country !== filters.country) {
@@ -178,9 +178,9 @@ export default function ImportExportData() {
 
     filtered.forEach((record) => {
       if (record.direction === 'export') {
-        exportTotal += record.amount || 0;
+        exportTotal += record.value || 0;
       } else {
-        importTotal += record.amount || 0;
+        importTotal += record.value || 0;
       }
     });
 
@@ -429,7 +429,7 @@ export default function ImportExportData() {
                       className="border-b border-slate-800 hover:bg-slate-800/30 transition-colors"
                     >
                       <td className="px-6 py-4 text-sm text-slate-300 font-mono">
-                        {record.hs_code}
+                        {record.hs_code || '-'}
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-300">
                         {record.product_name}
@@ -449,13 +449,13 @@ export default function ImportExportData() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-300 text-right">
-                        {record.quantity.toLocaleString('zh-CN')}
+                        {record.volume ? record.volume.toLocaleString('zh-CN') : '-'}
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-300 text-right">
-                        {record.amount.toLocaleString('zh-CN', {
+                        {record.value ? record.value.toLocaleString('zh-CN', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
-                        })}
+                        }) : '-'}
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-300 text-center">
                         {record.currency}
@@ -502,8 +502,8 @@ export default function ImportExportData() {
             product_name: '',
             country: '',
             direction: 'export',
-            quantity: '',
-            amount: '',
+            volume: '',
+            value: '',
             currency: 'USD',
             period: '',
             data_source: '',
@@ -589,9 +589,9 @@ export default function ImportExportData() {
                 type="number"
                 required
                 step="0.01"
-                value={formData.quantity}
+                value={formData.volume}
                 onChange={(e) =>
-                  setFormData({ ...formData, quantity: e.target.value })
+                  setFormData({ ...formData, volume: e.target.value })
                 }
                 className="input-field"
                 placeholder="0"
@@ -605,9 +605,9 @@ export default function ImportExportData() {
                 type="number"
                 required
                 step="0.01"
-                value={formData.amount}
+                value={formData.value}
                 onChange={(e) =>
-                  setFormData({ ...formData, amount: e.target.value })
+                  setFormData({ ...formData, value: e.target.value })
                 }
                 className="input-field"
                 placeholder="0"
@@ -697,8 +697,8 @@ export default function ImportExportData() {
                   product_name: '',
                   country: '',
                   direction: 'export',
-                  quantity: '',
-                  amount: '',
+                  volume: '',
+                  value: '',
                   currency: 'USD',
                   period: '',
                   data_source: '',

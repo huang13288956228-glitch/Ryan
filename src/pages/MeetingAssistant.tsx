@@ -41,7 +41,7 @@ export default function MeetingAssistant() {
       const { data, error } = await supabase
         .from('meetings')
         .select('*')
-        .order('meeting_time', { ascending: true });
+        .order('scheduled_at', { ascending: true });
 
       if (error) throw error;
       setMeetings(data || []);
@@ -56,8 +56,8 @@ export default function MeetingAssistant() {
     try {
       const { data } = await supabase
         .from('contacts')
-        .select('id, name')
-        .order('name');
+        .select('id, first_name, last_name')
+        .order('first_name');
       setContacts(data || []);
     } catch (error) {
       console.error('Error fetching contacts:', error);
@@ -68,8 +68,8 @@ export default function MeetingAssistant() {
     try {
       const { data } = await supabase
         .from('crm_deals')
-        .select('id, deal_name')
-        .order('deal_name');
+        .select('id, title')
+        .order('title');
       setDeals(data || []);
     } catch (error) {
       console.error('Error fetching deals:', error);
@@ -87,13 +87,13 @@ export default function MeetingAssistant() {
         .insert([
           {
             title: formData.title,
-            meeting_time: meetingDateTime,
-            duration_minutes: formData.duration,
+            scheduled_at: meetingDateTime,
+            duration_min: formData.duration,
             location: formData.location,
             contact_id: formData.contact_id || null,
             deal_id: formData.deal_id || null,
             agenda: formData.agenda,
-            attendees: formData.attendees,
+            participants: formData.attendees ? formData.attendees.split(',').map(p => p.trim()) : [],
             status: '已安排',
             user_id: user?.id,
           },
@@ -158,11 +158,11 @@ export default function MeetingAssistant() {
     const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
 
     const upcoming = meetings.filter(
-      (m) => new Date(m.meeting_time) >= tomorrow && m.status !== '已取消'
+      (m) => new Date(m.scheduled_at) >= tomorrow && m.status !== '已取消'
     ).length;
 
     const todayCount = meetings.filter((m) => {
-      const mDate = new Date(m.meeting_time);
+      const mDate = new Date(m.scheduled_at);
       return mDate >= today && mDate < tomorrow && m.status !== '已取消';
     }).length;
 
@@ -257,7 +257,7 @@ export default function MeetingAssistant() {
                     <div className="flex flex-wrap gap-4 text-slate-400 text-sm mb-3">
                       <div className="flex items-center gap-1">
                         <Clock size={16} />
-                        {formatTime(meeting.meeting_time)}
+                        {formatTime(meeting.scheduled_at)}
                       </div>
                       {meeting.location && (
                         <div className="flex items-center gap-1">
@@ -266,13 +266,13 @@ export default function MeetingAssistant() {
                         </div>
                       )}
                       <div className="text-slate-500">
-                        时长: {meeting.duration_minutes} 分钟
+                        时长: {meeting.duration_min} 分钟
                       </div>
                     </div>
-                    {meeting.attendees && (
+                    {meeting.participants && meeting.participants.length > 0 && (
                       <div className="flex items-center gap-1 text-slate-400 text-sm">
                         <User size={16} />
-                        {meeting.attendees}
+                        {meeting.participants.join(', ')}
                       </div>
                     )}
                   </div>
@@ -448,7 +448,7 @@ export default function MeetingAssistant() {
                 <option value="">选择联系人</option>
                 {contacts.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name}
+                    {c.first_name} {c.last_name || ''}
                   </option>
                 ))}
               </select>
@@ -467,7 +467,7 @@ export default function MeetingAssistant() {
                 <option value="">选择商机</option>
                 {deals.map((d) => (
                   <option key={d.id} value={d.id}>
-                    {d.deal_name}
+                    {d.title}
                   </option>
                 ))}
               </select>

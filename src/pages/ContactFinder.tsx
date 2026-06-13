@@ -95,8 +95,8 @@ export default function ContactFinder() {
   const filteredContacts = contacts.filter((contact) => {
     const matchesSearch =
       contact.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contact.last_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contact.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (contact.last_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (contact.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (contact.phone && contact.phone.includes(searchQuery));
 
     const matchesCompany = !selectedCompanyId || contact.company_id === selectedCompanyId;
@@ -114,11 +114,11 @@ export default function ContactFinder() {
     setEditingId(contact.id);
     setFormData({
       firstName: contact.first_name,
-      lastName: contact.last_name,
-      email: contact.email,
+      lastName: contact.last_name || '',
+      email: contact.email || '',
       phone: contact.phone || '',
       linkedinUrl: contact.linkedin_url || '',
-      jobTitle: contact.job_title || '',
+      jobTitle: contact.role || '',
       department: contact.department || '',
       companyId: contact.company_id || '',
       tags: contact.tags?.join(', ') || '',
@@ -143,11 +143,11 @@ export default function ContactFinder() {
       const contactData = {
         user_id: user?.id,
         first_name: formData.firstName,
-        last_name: formData.lastName,
-        email: formData.email,
+        last_name: formData.lastName || null,
+        email: formData.email || null,
         phone: formData.phone || null,
         linkedin_url: formData.linkedinUrl || null,
-        job_title: formData.jobTitle || null,
+        role: formData.jobTitle || null,
         department: formData.department || null,
         company_id: formData.companyId,
         tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()) : [],
@@ -197,7 +197,8 @@ export default function ContactFinder() {
     }
   };
 
-  const getCompanyName = (companyId: string) => {
+  const getCompanyName = (companyId: string | null) => {
+    if (!companyId) return '未分配';
     return companies.find((c) => c.id === companyId)?.name || '未知';
   };
 
@@ -278,10 +279,10 @@ export default function ContactFinder() {
                     <td className="table-cell px-6 py-4">
                       {contact.first_name} {contact.last_name}
                     </td>
-                    <td className="table-cell px-6 py-4 text-blue-300">{contact.email}</td>
+                    <td className="table-cell px-6 py-4 text-blue-300">{contact.email || '-'}</td>
                     <td className="table-cell px-6 py-4">{contact.phone || '-'}</td>
                     <td className="table-cell px-6 py-4">{getCompanyName(contact.company_id)}</td>
-                    <td className="table-cell px-6 py-4">{contact.job_title || '-'}</td>
+                    <td className="table-cell px-6 py-4">{contact.role || '-'}</td>
                     <td className="table-cell px-6 py-4">
                       {contact.linkedin_url ? (
                         <a

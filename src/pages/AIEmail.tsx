@@ -40,7 +40,7 @@ export default function AIEmail() {
         .from('contacts')
         .select('*')
         .eq('user_id', user?.id)
-        .order('name', { ascending: true });
+        .order('first_name', { ascending: true });
 
       if (error) throw error;
       setContacts(data || []);
@@ -71,10 +71,18 @@ export default function AIEmail() {
       return;
     }
 
+    const emailTypeMap: Record<string, string> = {
+      '回复询盘': 'reply_inquiry', '发送报价': 'send_quote', '跟进邮件': 'follow_up',
+      '产品介绍': 'introduce', '感谢邮件': 'thank_you',
+    };
+    const toneMap: Record<string, string> = {
+      '专业正式': 'professional', '友好亲切': 'friendly', '简洁明了': 'concise',
+    };
+
     try {
       const payload = {
-        emailType,
-        tone,
+        emailType: emailTypeMap[emailType] || emailType,
+        tone: toneMap[tone] || tone,
         customerName,
         country,
         product,
@@ -108,14 +116,11 @@ export default function AIEmail() {
         .insert([
           {
             user_id: user?.id,
-            type: emailType,
+            email_type: emailType,
             subject: emailSubject,
-            body: generatedEmail,
+            content: generatedEmail,
             tone: tone,
-            customer_name: customerName,
-            country: country,
-            product: product,
-            created_at: new Date().toISOString(),
+            contact_id: selectedContact || null,
           },
         ]);
 
@@ -193,7 +198,7 @@ export default function AIEmail() {
                 <option value="">-- 选择或跳过 --</option>
                 {contacts.map((contact) => (
                   <option key={contact.id} value={contact.id}>
-                    {contact.name}
+                    {contact.first_name + ' ' + (contact.last_name || '')}
                   </option>
                 ))}
               </select>

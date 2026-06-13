@@ -24,7 +24,7 @@ export default function LinkedInOutreach() {
   const [formData, setFormData] = useState({
     contact_id: '',
     profile_url: '',
-    campaign_name: '',
+    campaign: '',
     connection_message: '',
     follow_up_message: '',
     notes: '',
@@ -77,20 +77,22 @@ export default function LinkedInOutreach() {
 
   // Filter outreaches
   const filteredOutreaches = outreaches.filter(o => {
-    const campaign = campaignFilter ? o.campaign_name === campaignFilter : true;
+    const campaign = campaignFilter ? o.campaign === campaignFilter : true;
     const search = searchTerm
       ? o.connection_message?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contacts.find(c => c.id === o.contact_id)?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+        contacts.find(c => c.id === o.contact_id)?.first_name?.toLowerCase().includes(searchTerm.toLowerCase())
       : true;
     return campaign && search;
   });
 
   // Get campaigns list
-  const campaigns = Array.from(new Set(outreaches.map(o => o.campaign_name).filter(Boolean)));
+  const campaigns = Array.from(new Set(outreaches.map(o => o.campaign).filter((c): c is string => !!c)));
 
   // Get contact name
   const getContactName = (contactId: string | null) => {
-    return contacts.find(c => c.id === contactId)?.name || '未知';
+    const contact = contacts.find(c => c.id === contactId);
+    if (!contact) return '未知';
+    return contact.first_name + ' ' + (contact.last_name || '');
   };
 
   // Handle add/edit
@@ -100,7 +102,7 @@ export default function LinkedInOutreach() {
       setFormData({
         contact_id: outreach.contact_id || '',
         profile_url: outreach.profile_url || '',
-        campaign_name: outreach.campaign_name || '',
+        campaign: outreach.campaign || '',
         connection_message: outreach.connection_message || '',
         follow_up_message: outreach.follow_up_message || '',
         notes: outreach.notes || '',
@@ -110,7 +112,7 @@ export default function LinkedInOutreach() {
       setFormData({
         contact_id: '',
         profile_url: '',
-        campaign_name: '',
+        campaign: '',
         connection_message: '',
         follow_up_message: '',
         notes: '',
@@ -125,7 +127,7 @@ export default function LinkedInOutreach() {
     setFormData({
       contact_id: '',
       profile_url: '',
-      campaign_name: '',
+      campaign: '',
       connection_message: '',
       follow_up_message: '',
       notes: '',
@@ -138,9 +140,8 @@ export default function LinkedInOutreach() {
       const aiResponse = await callAI({
         task: 'linkedin_message',
         payload: {
-          contact_name: getContactName(formData.contact_id),
-          campaign_name: formData.campaign_name,
-          notes: formData.notes,
+          contactName: getContactName(formData.contact_id),
+          purpose: formData.campaign || 'Business collaboration',
         },
       });
 
@@ -323,7 +324,7 @@ export default function LinkedInOutreach() {
                           {outreach.profile_url?.slice(0, 30)}...
                         </a>
                       </td>
-                      <td className="px-6 py-4 text-sm text-white">{outreach.campaign_name}</td>
+                      <td className="px-6 py-4 text-sm text-white">{outreach.campaign}</td>
                       <td className="px-6 py-4">
                         <span className={`badge-blue ${getStatusBadgeColor(outreach.status || '')}`}>
                           {outreach.status}
@@ -362,7 +363,7 @@ export default function LinkedInOutreach() {
 
       {/* Modal */}
       {isModalOpen && (
-        <Modal onClose={handleCloseModal}>
+        <Modal isOpen={true} title={editingId ? '编辑触达' : '添加触达'} onClose={handleCloseModal}>
           <div className="w-full max-w-2xl">
             <h2 className="text-2xl font-bold text-white mb-6">
               {editingId ? '编辑触达' : '添加触达'}
@@ -378,7 +379,7 @@ export default function LinkedInOutreach() {
                 >
                   <option value="">选择联系人</option>
                   {contacts.map(contact => (
-                    <option key={contact.id} value={contact.id}>{contact.name}</option>
+                    <option key={contact.id} value={contact.id}>{contact.first_name + ' ' + (contact.last_name || '')}</option>
                   ))}
                 </select>
               </div>
@@ -398,8 +399,8 @@ export default function LinkedInOutreach() {
                 <label className="block text-sm font-medium text-gray-300 mb-2">活动名称</label>
                 <input
                   type="text"
-                  value={formData.campaign_name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, campaign_name: e.target.value }))}
+                  value={formData.campaign}
+                  onChange={(e) => setFormData(prev => ({ ...prev, campaign: e.target.value }))}
                   placeholder="例：2024年春季活动"
                   className="input-field w-full"
                 />

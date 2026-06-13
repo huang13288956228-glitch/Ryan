@@ -3,10 +3,10 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { useDeepseekAI } from '../hooks/useDeepseekAI';
 import { Modal } from '../components/Modal';
-import { MarketResearch, Finding, DataSource } from '../lib/supabase';
+import { MarketResearch as MarketResearchType, Finding, DataSource } from '../lib/supabase';
 import { Search, Plus, Zap, ChevronDown, AlertCircle } from 'lucide-react';
 
-interface ResearchCardData extends MarketResearch {
+interface ResearchCardData extends MarketResearchType {
   findings: Finding[];
   data_sources: DataSource[];
 }
@@ -125,8 +125,9 @@ export default function MarketResearch() {
       if ((formData as any).findings && Array.isArray((formData as any).findings)) {
         const findings = ((formData as any).findings as any[]).map((f) => ({
           research_id: researchId,
-          finding_text: f.finding_text || f,
-          significance: f.significance || '中',
+          title: f.title || '',
+          detail: f.detail || f.finding_text || f,
+          significance: f.significance || 'medium',
         }));
 
         const { error: findingsError } = await supabase
@@ -140,8 +141,9 @@ export default function MarketResearch() {
       if ((formData as any).data_sources && Array.isArray((formData as any).data_sources)) {
         const sources = ((formData as any).data_sources as any[]).map((s) => ({
           research_id: researchId,
-          source_name: s.source_name || s,
-          source_url: s.source_url || '',
+          name: s.name || s.source_name || s,
+          url: s.url || s.source_url || '',
+          accessed_at: new Date().toISOString(),
         }));
 
         const { error: sourcesError } = await supabase
@@ -344,7 +346,7 @@ export default function MarketResearch() {
                                 {finding.significance}
                               </span>
                               <span className="flex-1">
-                                {finding.finding_text}
+                                {finding.detail}
                               </span>
                             </div>
                           ))}
@@ -360,17 +362,17 @@ export default function MarketResearch() {
                         <div className="space-y-1">
                           {item.data_sources.map((source, idx) => (
                             <div key={idx} className="text-xs text-slate-400">
-                              {source.source_url ? (
+                              {source.url ? (
                                 <a
-                                  href={source.source_url}
+                                  href={source.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-blue-400 hover:text-blue-300"
                                 >
-                                  {source.source_name}
+                                  {source.name}
                                 </a>
                               ) : (
-                                <span>{source.source_name}</span>
+                                <span>{source.name}</span>
                               )}
                             </div>
                           ))}

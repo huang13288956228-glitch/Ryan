@@ -23,8 +23,8 @@ export default function WhatsAppOutreach() {
   // Form state
   const [formData, setFormData] = useState({
     contact_id: '',
-    phone_number: '',
-    campaign_name: '',
+    phone: '',
+    campaign: '',
     message_template: '',
     notes: '',
   });
@@ -76,21 +76,23 @@ export default function WhatsAppOutreach() {
 
   // Filter outreaches
   const filteredOutreaches = outreaches.filter(o => {
-    const campaign = campaignFilter ? o.campaign_name === campaignFilter : true;
+    const campaign = campaignFilter ? o.campaign === campaignFilter : true;
     const search = searchTerm
       ? o.message_template?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        o.phone_number?.includes(searchTerm) ||
-        contacts.find(c => c.id === o.contact_id)?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+        o.phone?.includes(searchTerm) ||
+        contacts.find(c => c.id === o.contact_id)?.first_name?.toLowerCase().includes(searchTerm.toLowerCase())
       : true;
     return campaign && search;
   });
 
   // Get campaigns list
-  const campaigns = Array.from(new Set(outreaches.map(o => o.campaign_name).filter(Boolean)));
+  const campaigns = Array.from(new Set(outreaches.map(o => o.campaign).filter((c): c is string => !!c)));
 
   // Get contact name
   const getContactName = (contactId: string | null) => {
-    return contacts.find(c => c.id === contactId)?.name || '未知';
+    const contact = contacts.find(c => c.id === contactId);
+    if (!contact) return '未知';
+    return contact.first_name + ' ' + (contact.last_name || '');
   };
 
   // Handle add/edit
@@ -99,8 +101,8 @@ export default function WhatsAppOutreach() {
       setEditingId(outreach.id);
       setFormData({
         contact_id: outreach.contact_id || '',
-        phone_number: outreach.phone_number || '',
-        campaign_name: outreach.campaign_name || '',
+        phone: outreach.phone || '',
+        campaign: outreach.campaign || '',
         message_template: outreach.message_template || '',
         notes: outreach.notes || '',
       });
@@ -108,8 +110,8 @@ export default function WhatsAppOutreach() {
       setEditingId(null);
       setFormData({
         contact_id: '',
-        phone_number: '',
-        campaign_name: '',
+        phone: '',
+        campaign: '',
         message_template: '',
         notes: '',
       });
@@ -122,8 +124,8 @@ export default function WhatsAppOutreach() {
     setEditingId(null);
     setFormData({
       contact_id: '',
-      phone_number: '',
-      campaign_name: '',
+      phone: '',
+      campaign: '',
       message_template: '',
       notes: '',
     });
@@ -135,9 +137,8 @@ export default function WhatsAppOutreach() {
       const aiResponse = await callAI({
         task: 'whatsapp_message',
         payload: {
-          contact_name: getContactName(formData.contact_id),
-          campaign_name: formData.campaign_name,
-          notes: formData.notes,
+          contactName: getContactName(formData.contact_id),
+          purpose: formData.campaign || 'Introduce and explore collaboration',
         },
       });
 
@@ -157,7 +158,7 @@ export default function WhatsAppOutreach() {
     try {
       setError(null);
 
-      if (!formData.contact_id || !formData.phone_number || !formData.message_template) {
+      if (!formData.contact_id || !formData.phone || !formData.message_template) {
         setError('请填写所有必填字段');
         return;
       }
@@ -319,8 +320,8 @@ export default function WhatsAppOutreach() {
                   filteredOutreaches.map((outreach) => (
                     <tr key={outreach.id} className="border-b border-slate-700/50 hover:bg-slate-800/30">
                       <td className="px-6 py-4 text-sm text-white">{getContactName(outreach.contact_id)}</td>
-                      <td className="px-6 py-4 text-sm text-blue-400">{outreach.phone_number}</td>
-                      <td className="px-6 py-4 text-sm text-white">{outreach.campaign_name}</td>
+                      <td className="px-6 py-4 text-sm text-blue-400">{outreach.phone}</td>
+                      <td className="px-6 py-4 text-sm text-white">{outreach.campaign}</td>
                       <td className="px-6 py-4">
                         <span className={`badge-blue ${getStatusBadgeColor(outreach.status || '')}`}>
                           {outreach.status}
@@ -359,7 +360,7 @@ export default function WhatsAppOutreach() {
 
       {/* Modal */}
       {isModalOpen && (
-        <Modal onClose={handleCloseModal}>
+        <Modal isOpen={true} title={editingId ? '编辑联系' : '添加联系'} onClose={handleCloseModal}>
           <div className="w-full max-w-2xl">
             <h2 className="text-2xl font-bold text-white mb-6">
               {editingId ? '编辑联系' : '添加联系'}
@@ -375,7 +376,7 @@ export default function WhatsAppOutreach() {
                 >
                   <option value="">选择联系人</option>
                   {contacts.map(contact => (
-                    <option key={contact.id} value={contact.id}>{contact.name}</option>
+                    <option key={contact.id} value={contact.id}>{contact.first_name + ' ' + (contact.last_name || '')}</option>
                   ))}
                 </select>
               </div>
@@ -384,8 +385,8 @@ export default function WhatsAppOutreach() {
                 <label className="block text-sm font-medium text-gray-300 mb-2">电话号码 *</label>
                 <input
                   type="tel"
-                  value={formData.phone_number}
-                  onChange={(e) => setFormData(prev => ({ ...prev, phone_number: e.target.value }))}
+                  value={formData.phone}
+                  onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                   placeholder="+86 188 8888 8888"
                   className="input-field w-full"
                 />
@@ -395,8 +396,8 @@ export default function WhatsAppOutreach() {
                 <label className="block text-sm font-medium text-gray-300 mb-2">活动名称</label>
                 <input
                   type="text"
-                  value={formData.campaign_name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, campaign_name: e.target.value }))}
+                  value={formData.campaign}
+                  onChange={(e) => setFormData(prev => ({ ...prev, campaign: e.target.value }))}
                   placeholder="例：产品推介"
                   className="input-field w-full"
                 />

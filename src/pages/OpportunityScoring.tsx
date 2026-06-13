@@ -150,8 +150,8 @@ export default function OpportunityScoring() {
       const contactInfo = getContactInfo(deal.contact_id);
       const payload = {
         dealTitle: deal.title,
-        company: getCompany(deal.company_id)?.name || '',
-        value: deal.value,
+        company: getCompany(deal.company_id || '')?.name || '',
+        value: deal.value.toString(),
         stage: deal.stage,
         notes: deal.notes || '',
         contactInfo,
@@ -436,7 +436,7 @@ export default function OpportunityScoring() {
                 .filter((deal) => !opportunities.some((opp) => opp.deal_id === deal.id))
                 .map((deal) => (
                   <option key={deal.id} value={deal.id}>
-                    {deal.title} - {getCompany(deal.company_id)?.name || '未知'}
+                    {deal.title} - {getCompany(deal.company_id || '')?.name || '未知'}
                   </option>
                 ))}
             </select>
@@ -456,7 +456,7 @@ export default function OpportunityScoring() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-400">公司</span>
-                      <span className="text-gray-200">{getCompany(deal.company_id)?.name || '-'}</span>
+                      <span className="text-gray-200">{getCompany(deal.company_id || '')?.name || '-'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-400">金额</span>

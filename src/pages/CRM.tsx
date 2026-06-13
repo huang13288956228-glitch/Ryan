@@ -164,7 +164,7 @@ export default function CRM() {
     setEditingId(deal.id);
     setFormData({
       title: deal.title,
-      companyId: deal.company_id,
+      companyId: deal.company_id || '',
       contactId: deal.contact_id || '',
       stage: deal.stage as StageKey,
       probability: deal.probability || 50,
@@ -327,7 +327,7 @@ export default function CRM() {
                         <div className="space-y-2 text-xs">
                           <p className="text-gray-300">
                             <span className="text-gray-400">公司：</span>
-                            {getCompanyName(deal.company_id)}
+                            {getCompanyName(deal.company_id || '')}
                           </p>
                           <p className="text-gray-300">
                             <span className="text-gray-400">联系人：</span>
